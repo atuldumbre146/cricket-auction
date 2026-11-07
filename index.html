@@ -81,7 +81,15 @@ button.srow:hover{background:var(--line)}
 .stage>*{position:relative;z-index:1}
 .lotlabel{font:600 12px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:center}
 .card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;background:var(--pitch);border:1px solid var(--line);border-radius:14px;padding:14px}
-.av{width:118px;height:118px;border-radius:50%;overflow:hidden;flex:none;border:3px solid var(--chalk);box-shadow:0 0 0 4px rgba(0,0,0,.25)}
+.av{width:118px;height:118px;border-radius:50%;overflow:hidden;flex:none;border:3px solid var(--chalk);box-shadow:0 0 0 4px rgba(0,0,0,.25);position:relative}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.av.tier-Platinum{border-color:#C9CCEB}.av.tier-Gold{border-color:var(--gold)}.av.tier-Silver{border-color:#D6D9D8}.av.tier-Bronze{border-color:#D9A77A}.av.tier-Rising{border-color:#8FE0AE}
+.fact{font:500 13.5px/1.4 var(--f-body);color:var(--chalk);background:rgba(233,185,73,.10);border-left:3px solid var(--gold);padding:8px 10px;border-radius:0 8px 8px 0;max-width:60ch}
+.fact b{color:var(--gold)}
+.dyk{max-width:52ch;text-align:left}
+.tchip{font:700 11px/1 var(--f-body);letter-spacing:.1em;padding:6px 8px;border-radius:6px;border:1.5px dashed var(--muted);color:var(--muted);white-space:nowrap}
+.tchip.used{opacity:.45;text-decoration:line-through}
+.cards{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .av svg{width:100%;height:100%;display:block}
 .cinfo{min-width:0;display:grid;gap:8px}
 .cinfo h3{margin:0;font:clamp(22px,3.2vw,32px)/1.05 var(--f-display);text-wrap:balance}
@@ -118,6 +126,8 @@ button.srow:hover{background:var(--line)}
 .bb:disabled{filter:grayscale(1) brightness(.55)}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .kbd{font:600 11px/1 var(--f-body);color:var(--faint);text-align:center}
+.sbtn:disabled{opacity:.4}
+.sbtn kbd{font:600 11px/1 var(--f-body);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:2px 5px;color:var(--muted);margin-left:4px}
 .kbd kbd{font:600 11px/1 var(--f-body);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:2px 5px;color:var(--muted)}
 
 /* idle / spin */
@@ -339,7 +349,37 @@ Muttiah Muralitharan|Sri Lanka|Bowling|97
 Glenn McGrath|Australia|Bowling|96
 Ricky Ponting|Australia|Batting|96
 Rahul Dravid|India|Batting|95`;
-const LEG_BASE=12, MAX_COACH=2;
+const LEG_BASE=12, MAX_COACH=2, QUICK=3000, TIMEOUT_MS=20000;
+const LEGFACT={"Sachin Tendulkar":"First man to score a double century in a men's ODI, and the only player with 100 international hundreds.",
+"Shane Warne":"His first Ashes ball, to Mike Gatting in 1993, is known as the Ball of the Century.",
+"Brian Lara":"Holds the highest individual Test score: 400 not out against England in 2004.",
+"Sir Viv Richards":"Faced the fastest bowlers in the world without ever wearing a helmet.",
+"Jacques Kallis":"Scored over 10,000 runs and took over 250 wickets in both Tests and ODIs.",
+"Kapil Dev":"Captained India to their first World Cup win in 1983, after rescuing them with 175 not out against Zimbabwe.",
+"MS Dhoni":"The only captain to win the ODI World Cup, the T20 World Cup and the Champions Trophy.",
+"Adam Gilchrist":"Hit 149 in the 2007 World Cup final with a squash ball tucked inside his glove.",
+"Muttiah Muralitharan":"Took 800 Test wickets, the most ever, with his 800th coming from the last ball of his Test career.",
+"Glenn McGrath":"Won three World Cups in a row with Australia: 1999, 2003 and 2007.",
+"Ricky Ponting":"Won three World Cups, two of them as captain (2003 and 2007).",
+"Rahul Dravid":"Nicknamed The Wall: he faced more balls in Test cricket than anyone else in history."};
+const FACTS=["A cricket pitch is 22 yards long, the same as a chain, an old measure used by surveyors.",
+"The first Test match was played in 1877 between Australia and England at the MCG.",
+"The first ODI happened by accident in 1971, after rain washed out a Test in Melbourne.",
+"Sir Don Bradman finished with a Test batting average of 99.94. He needed just 4 runs in his last innings to average 100.",
+"Jim Laker took 19 wickets in a single Test against Australia in 1956. Nobody has come close since.",
+"Yuvraj Singh hit six sixes in one over against England at the 2007 T20 World Cup.",
+"AB de Villiers holds the record for the fastest ODI hundred: 31 balls against the West Indies in 2015.",
+"Rohit Sharma's 264 against Sri Lanka in 2014 is the highest individual score in ODIs.",
+"MS Dhoni finished the 2011 World Cup final with a six at the Wankhede.",
+"The Ashes urn is only about 11 cm tall.",
+"The Duckworth-Lewis method for rain-shortened games is named after two statisticians, not cricketers.",
+"A batter who is out first ball scores a golden duck.",
+"The 1939 Timeless Test in Durban was played over 12 days and still ended in a draw, because England had to catch their ship home.",
+"Kumar Sangakkara scored four hundreds in a row at the 2015 World Cup.",
+"Muttiah Muralitharan is the only bowler with 800 Test wickets and over 500 ODI wickets."];
+const slug=n=>n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+window.NOPIC=new Set();
+const photo=p=>{const sl=slug(p.n);return NOPIC.has(sl)?"":`<img src="images/${sl}.jpg" alt="" onerror="NOPIC.add('${sl}');this.remove()">`};
 const BOOST={"Batting":{roles:["Batter"],per:3,word:"Batter"},"Bowling":{roles:["Bowler"],per:3,word:"Bowler"},"All-round":{roles:["All-rounder"],per:5,word:"All-rounder"},"Keeping":{roles:["Wicket-keeper"],per:10,word:"Wicket-keeper"}};
 const PLAYERS=[...RAW.split("\n").map(l=>{const [n,c,r,t,rt]=l.split("|");return {n,c,r,t,b:TIERS[t],rt:+rt,kind:"P"}}),
   ...LEG.split("\n").map(l=>{const [n,c,spec,rt]=l.split("|");return {n,c,r:"Coach",spec,t:"Legend",b:LEG_BASE,rt:+rt,kind:"L"}})].map((p,i)=>({...p,id:i}));
@@ -387,10 +427,10 @@ const GAVEL='<svg class="gavel" viewBox="0 0 100 100" aria-hidden="true"><rect x
 const BALL='<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D7263D"/><path d="M6 5Q12 12 6 19M18 5Q12 12 18 19" stroke="#F4ECDA" stroke-width="1.2" fill="none" stroke-dasharray="1.6 1.4"/></svg>';
 
 /* ---------------- state ---------------- */
-const KEY="cricket-auction-night-v2";
+const KEY="cricket-auction-night-v3";
 let S, ui={pool:"all", reel:null, overlay:null, revealTimer:null, nextTimer:null};
 function fresh(cfg={}){return Object.assign({phase:"setup",names:["Papa","Son"],kitty:200,squad:11,timerSec:10,rtmOn:true,unsoldOn:true,round:1,
-  players:PLAYERS.map(p=>({...p,owner:null,price:null,r2:false,r3:false,seq:null,rtmUsed:false})),cur:null,rtm:[true,true],log:[],captains:[null,null],seq:0,muted:false},cfg)}
+  players:PLAYERS.map(p=>({...p,owner:null,price:null,r2:false,r3:false,seq:null,rtmUsed:false})),cur:null,rtm:[true,true],timeouts:[true,true],log:[],captains:[null,null],seq:0,muted:false},cfg)}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.players&&s.players.length===PLAYERS.length)return s}catch(e){}return null}
 
@@ -412,7 +452,8 @@ const lotSlots=i=>legendLot()?coachSlots(i):slots(i);
 const base=p=>S.round===2?Math.ceil(p.b/2):p.b;
 const inc=v=>v>=20?2:1;
 const finalePool=()=>S.players.filter(p=>isL(p)&&!p.r3&&(p.owner===null||p.owner==="U"));
-const pool=()=>S.round===1?S.players.filter(p=>p.owner===null):S.round===2?S.players.filter(p=>p.owner==="U"&&!p.r2):finalePool();
+const anyCoachSlot=()=>coachSlots(0)>0||coachSlots(1)>0;
+const pool=()=>(S.round===1?S.players.filter(p=>p.owner===null):S.round===2?S.players.filter(p=>p.owner==="U"&&!p.r2):finalePool()).filter(p=>!isL(p)||anyCoachSlot());
 function finaleOK(){const fp=finalePool();if(!fp.length)return false;const mb=Math.min(...fp.map(p=>p.b));return [0,1].some(i=>coachSlots(i)>0&&rem(i)-slots(i)*reserve()>=mb)}
 function boost(c,i){const B=BOOST[c.spec];return B.per*team(i).filter(p=>B.roles.includes(p.r)).length}
 const boostTxt=c=>`+${BOOST[c.spec].per} for each ${BOOST[c.spec].word} in the squad`;
@@ -430,11 +471,13 @@ function rules(i){
     {k:"CTRY",txt:`Max from 1 country: ${mx}/5`,ok:mx<=5}];
 }
 const broken=i=>rules(i).filter(r=>!r.ok).length;
+function stealOf(){let best=null;S.players.forEach(p=>{if(!isL(p)&&(p.owner===0||p.owner===1)&&p.price>0){const v=p.rt/p.price;if(!best||v>best.v||(v===best.v&&p.rt>best.p.rt))best={p,v}}});return best&&best.p}
 function scoreParts(i){
   const t=team(i),sum=t.reduce((s,p)=>s+p.rt,0),cap=S.captains[i]!=null&&P(S.captains[i]).owner===i?P(S.captains[i]).rt:0,b=broken(i);
   const co=coaches(i),coach=co.reduce((s,c)=>s+c.rt,0),cboost=co.reduce((s,c)=>s+boost(c,i),0);
   const bal=b===0?10:0,money=Math.floor(rem(i)/5),pen=-15*b;
-  return {sum,cap,coach,cboost,bal,money,pen,total:sum+cap+coach+cboost+bal+money+pen};
+  const st=stealOf(),steal=st&&st.owner===i?5:0,nC=new Set(t.map(p=>p.c)).size,world=nC>=5?5:0;
+  return {sum,cap,coach,cboost,bal,money,pen,steal,world,nC,total:sum+cap+coach+cboost+bal+money+pen+steal+world};
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const N=i=>esc(S.names[i]);
@@ -491,7 +534,7 @@ function panel(i){
   const coachRows=co.map(c=>`<div class="srow coach">${ICON.Coach}<span class="nm">${esc(c.n)} <span class="spec">${c.spec} coach · +${boost(c,i)}</span></span><span class="pr num">${c.price}</span></div>`).join("")
     +Array.from({length:coachSlots(i)},()=>`<div class="srow empty coachempty">Coach slot open</div>`).join("");
   return `<section class="panel p${i}" aria-label="${N(i)}'s squad">
-   <div class="pname"><h2>${N(i)}</h2>${S.rtmOn?`<span class="rtm${S.rtm[i]?"":" used"}" title="Right to Match card">RTM card</span>`:""}</div>
+   <div class="pname"><h2>${N(i)}</h2><span class="cards">${S.rtmOn?`<span class="rtm${S.rtm[i]?"":" used"}" title="Right to Match card">RTM card</span>`:""}<span class="tchip${S.timeouts[i]?"":" used"}" title="Strategic timeout card">Timeout</span></span></div>
    <div class="wallet"><div class="stat"><label>Points left</label><span class="num">${rem(i)}</span></div>
      <div class="stat max"><label>${lg?"Max for coach":"Max bid"}</label><span class="num">${lg?maxCoach(i):maxBid(i)}</span></div>
      <div class="stat sl"><label>Slots left</label><span class="num">${slots(i)}</span></div></div>
@@ -504,11 +547,12 @@ function panel(i){
   </section>`;
 }
 function playerCard(p){
-  if(isL(p))return `<div class="card legend"><div class="av">${avatar(p)}</div><div class="cinfo"><div class="legtag">Legend · Coach</div><h3>${esc(p.n)}</h3>
+  if(isL(p))return `<div class="card legend"><div class="av">${avatar(p)}${photo(p)}</div><div class="cinfo"><div class="legtag">Legend · Coach</div><h3>${esc(p.n)}</h3>
    <div class="meta"><span class="tag">${flag(p.c)}${esc(p.c)}</span><span class="tag">${ICON.Coach}${p.spec} coach</span><span class="tag tier t-Legend">Legend</span></div>
-   <div class="meta"><span class="tag">Coach boost: ${boostTxt(p)}</span><span class="tag">Base price <b class="num" style="font-size:18px;line-height:.8">${base(p)}</b> pts</span></div></div></div>`;
+   <div class="meta"><span class="tag">Coach boost: ${boostTxt(p)}</span><span class="tag">Base price <b class="num" style="font-size:18px;line-height:.8">${base(p)}</b> pts</span></div>
+   ${LEGFACT[p.n]?`<div class="fact"><b>Legend fact:</b> ${LEGFACT[p.n]}</div>`:""}</div></div>`;
   const tierCls=p.t==="Rising Star"?"t-Rising":"t-"+p.t;
-  return `<div class="card"><div class="av">${avatar(p)}</div><div class="cinfo"><h3>${esc(p.n)}</h3>
+  return `<div class="card"><div class="av tier-${p.t.split(" ")[0]}">${avatar(p)}${photo(p)}</div><div class="cinfo"><h3>${esc(p.n)}</h3>
    <div class="meta"><span class="tag">${flag(p.c)}${esc(p.c)}</span><span class="tag">${ICON[p.r]}${p.r}</span><span class="tag tier ${tierCls}">${p.t}</span></div>
    <div class="meta"><span class="tag">Base price <b class="num" style="font-size:18px;line-height:.8">${base(p)}</b> pts${S.round===2?" (half)":""}</span></div></div></div>`;
 }
@@ -522,6 +566,7 @@ function stage(){
       <button class="bigbtn" data-act="spin" ${ph==="spinning"?"disabled":""}>Spin for next player</button>
       <div class="kbd">or press <kbd>Space</kbd></div>
       ${S.banner?`<div class="banner">${S.banner}</div>`:""}
+      <div class="fact dyk"><b>Did you know?</b> ${FACTS[S.log.length%FACTS.length]}</div>
       ${last?`<div class="ctl"><button class="sbtn" data-act="undo">Undo last result (${esc(last.n)})</button><button class="sbtn" data-act="finish">End auction now</button></div>`:""}
     </div></section>`;
   }
@@ -537,16 +582,18 @@ function stage(){
        <div class="timer" aria-hidden="true"><svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--pitch)" stroke-width="8"/><circle id="ring" cx="48" cy="48" r="42" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="0"/></svg><span class="t num" id="tleft">${S.timerSec}</span></div></div>
      <div class="status" id="tstatus" aria-live="polite">Bidding open</div>
      <div class="bidbtns">${btn(0)}${btn(1)}</div>
-     <div class="ctl"><button class="sbtn" data-act="pause">${c.paused!=null?"Resume clock":"Pause clock"}</button>
-       <button class="sbtn" data-act="hammer">${c.leader==null?"No takers: mark unsold":"Bang the gavel now"}</button></div>
-     <div class="kbd"><kbd>A</kbd> / <kbd>S</kbd> ${N(0)} · <kbd>L</kbd> / <kbd>K</kbd> ${N(1)} · <kbd>P</kbd> pause</div>
+     <div class="ctl"><button class="sbtn" data-act="timeout" data-i="0" ${canTimeout(0)?"":"disabled"}>${N(0)}: Timeout <kbd>Q</kbd></button>
+       <button class="sbtn" data-act="pause">${c.paused!=null?"Resume clock":"Pause clock"} <kbd>P</kbd></button>
+       ${c.leader==null?`<button class="sbtn" data-act="unsold">Mark unsold <kbd>U</kbd></button>`:`<button class="sbtn" data-act="hammer">Bang the gavel <kbd>G</kbd></button>`}
+       <button class="sbtn" data-act="timeout" data-i="1" ${canTimeout(1)?"":"disabled"}>${N(1)}: Timeout <kbd>O</kbd></button></div>
+     <div class="kbd"><kbd>A</kbd> bid / <kbd>S</kbd> +5 ${N(0)} · <kbd>L</kbd> bid / <kbd>K</kbd> +5 ${N(1)}</div>
     </section>`;
   }
   if(ph==="rtm"){
     const c=S.cur,p=P(c.id),o=1-c.leader;
     return `<section class="stage"><div class="lotlabel">Right to Match</div>${playerCard(p)}
      <div class="rtmbox"><h4>${N(o)}, use your RTM card?</h4><p style="margin:0">${N(c.leader)} won <b>${esc(p.n)}</b> for <b>${c.bid} pts</b>. Match the price and he joins your team instead. One card per game.</p>
-     <div class="ctl"><button class="bb b${o}" data-act="rtm" data-yes="1" style="padding-inline:22px">Match ${c.bid} and steal him</button><button class="sbtn" data-act="rtm" data-yes="0">Let him go</button></div>
+     <div class="ctl"><button class="bb b${o}" data-act="rtm" data-yes="1" style="padding-inline:22px">Match ${c.bid} and steal him <small>Key Y</small></button><button class="sbtn" data-act="rtm" data-yes="0">Let him go <kbd>N</kbd></button></div>
      <div class="status" id="tstatus">Decide in <span id="rtmleft" class="num">8</span>…</div></div></section>`;
   }
   if(ph==="sold"){
@@ -554,7 +601,7 @@ function stage(){
     return `<section class="stage"><div class="lotlabel">Lot closed</div>${playerCard(p)}<div class="stampwrap">
       <div class="stamp${r.owner==="U"?" unsold":""}">${r.owner==="U"?"UNSOLD":r.rtm?"MATCHED!":"SOLD!"}</div>
       <div class="soldto">${r.owner==="U"?(S.round===1&&S.unsoldOn?"No bids. He returns in the unsold round at half price.":"No bids. He sits this one out."):`${esc(p.n)} joins <b class="c${r.owner}">${N(r.owner)}</b>${isL(p)?" as coach":""} for <span class="num" style="font-size:24px">${r.price}</span> pts${r.rtm?" using the RTM card":""}`}</div>
-      <button class="bigbtn gold" data-act="next">Next lot</button></div></section>`;
+      <button class="bigbtn gold" data-act="next">Next lot</button><div class="kbd">or press <kbd>Space</kbd></div></div></section>`;
   }
   if(ph==="captain"){
     const ready=[0,1].every(i=>S.captains[i]!=null||team(i).length===0);
@@ -575,6 +622,8 @@ function revealStage(){
      <div class="hidden-until" data-bonus="${i}">
       <div class="rr bonus"><span class="nm">Captain bonus</span><span class="num" style="font-size:20px">+${s.cap}</span></div>
       <div class="rr bonus"><span class="nm">Coach speciality boost</span><span class="num" style="font-size:20px">+${s.cboost}</span></div>
+      <div class="rr bonus"><span class="nm">Steal of the auction${stealOf()&&stealOf().owner===i?` (${esc(stealOf().n)})`:""}</span><span class="num" style="font-size:20px">+${s.steal}</span></div>
+      <div class="rr bonus"><span class="nm">World XI bonus (${s.nC} countries)</span><span class="num" style="font-size:20px">+${s.world}</span></div>
       <div class="rr bonus"><span class="nm">Balanced XI bonus</span><span class="num" style="font-size:20px">+${s.bal}</span></div>
       <div class="rr bonus"><span class="nm">Smart money (${rem(i)} pts left)</span><span class="num" style="font-size:20px">+${s.money}</span></div>
       <div class="rr bonus"><span class="nm">Rules broken: ${broken(i)}</span><span class="num" style="font-size:20px">${s.pen}</span></div></div>
@@ -617,8 +666,13 @@ function renderOverlay(){
     <li><b>Unsold round:</b> leftover players return at half price.</li>
     <li><b>Legend coaches:</b> ${LEG.split("\n").length} legends like Sachin, Warne and Lara turn up in the draw with a golden card. Each team can sign up to ${MAX_COACH} as coaches (base ${LEG_BASE} pts). They don't take a squad slot. Any legends left once both squads are full go into a <b>Legends finale</b>.</li>
     <li><b>Coach power</b> = the legend's secret rating + a speciality boost: Batting coach +3 per Batter, Bowling coach +3 per Bowler, All-round coach +5 per All-rounder, Keeping coach +10 per Wicket-keeper.</li>
+    <li><b>Strategic timeout:</b> once per game, each bidder can freeze the clock for 20 seconds to think (keys Q and O).</li>
+    <li><b>Fast hammer:</b> if nobody can afford a player, or nobody can raise the current bid, the clock drops to 3 seconds. Legends stop appearing once both teams have 2 coaches.</li>
+    <li><b>Steal of the auction:</b> the bought player with the best rating for the price earns his team +5.</li>
+    <li><b>World XI bonus:</b> +5 if your squad has players from at least 5 countries.</li>
     <li><b>Captain:</b> his secret rating counts double.</li>
-    <li><b>Team power</b> = player ratings + captain + coach power + 10 for a balanced XI + 1 per 5 unspent points − 15 per broken rule.</li>
+    <li><b>Team power</b> = player ratings + captain + coach power + 10 for a balanced XI + steal and World XI bonuses + 1 per 5 unspent points − 15 per broken rule.</li>
+    <li><b>Shortcuts:</b> Space spin or next lot · A/S and L/K bid · G gavel · U unsold · P pause · Q/O timeout · Y/N for RTM.</li>
     <li>Ratings stay hidden until the reveal. Cheap Rising Stars can be hidden gems.</li></ol>
     <p>Base prices: Platinum 20 · Gold 15 · Silver 10 · Bronze 6 · Rising Star 3. They are virtual points made up for this game.</p>
     <div class="rowbtns"><button class="pbtn" data-act="close">Got it</button></div></div>`;
@@ -656,22 +710,25 @@ function spin(){
     else{if(r){r.textContent=pick.n;r.classList.remove("rolling")}ui.reel=setTimeout(()=>startLot(pick),450)}};
   step();
 }
-function startLot(p){S.cur={id:p.id,bid:null,leader:null,deadline:Date.now()+S.timerSec*1000,paused:null,lastSec:null};S.phase="live";SND.gavel&&tone(440,.15,"triangle",.12);save();render()}
+function anyCanRaise(){const c=S.cur,nb=nextBid();return [0,1].some(i=>c.leader!==i&&lotSlots(i)>0&&nb<=lotMax(i))}
+function setClock(c){c.quick=!anyCanRaise();c.dur=c.quick?QUICK:S.timerSec*1000;c.lastSec=null;c.to=null;if(c.paused!=null)c.paused=c.dur;else c.deadline=Date.now()+c.dur}
+const canTimeout=i=>S.phase==="live"&&S.timeouts[i]&&S.cur.paused==null&&!S.cur.to&&!S.cur.quick;
+function useTimeout(i){if(!canTimeout(i))return;const c=S.cur;S.timeouts[i]=false;c.to={who:i,until:Date.now()+TIMEOUT_MS,left:Math.max(1000,c.deadline-Date.now())};tone(330,.2,"triangle",.15);save();render()}
+function startLot(p){S.cur={id:p.id,bid:null,leader:null,paused:null};S.phase="live";setClock(S.cur);tone(440,.15,"triangle",.12);save();render()}
 function bid(i,jump){
   if(S.phase!=="live")return;const amt=jump?jumpBid():nextBid();if(bidBlock(i,amt))return;
-  const c=S.cur;c.bid=amt;c.leader=i;c.lastSec=null;
-  if(c.paused!=null)c.paused=S.timerSec*1000;else c.deadline=Date.now()+S.timerSec*1000;
+  const c=S.cur;c.bid=amt;c.leader=i;setClock(c);
   SND.bid();save();render();const bb=document.getElementById("bidbox");if(bb){bb.classList.add("bump")}
 }
 function updTimer(){
   const c=S.cur;if(!c)return;const left=c.paused!=null?c.paused:Math.max(0,c.deadline-Date.now());
-  const frac=left/(S.timerSec*1000),ring=document.getElementById("ring"),tl=document.getElementById("tleft"),st=document.getElementById("tstatus");
+  const frac=Math.min(1,left/(c.dur||S.timerSec*1000)),ring=document.getElementById("ring"),tl=document.getElementById("tleft"),st=document.getElementById("tstatus");
   const sec=Math.ceil(left/1000);
   if(ring){ring.style.strokeDashoffset=(263.9*(1-frac)).toFixed(1);ring.style.stroke=frac<.34?"var(--ball)":"var(--gold)"}
-  if(tl)tl.textContent=sec;
-  if(st){let m,hot=false;if(c.paused!=null)m="Clock paused";else if(c.leader==null)m=frac>.34?"Who will open the bidding?":"Last call for an opening bid…";else if(frac>.66)m="Bidding open";else if(frac>.34){m="Going once…"}else{m="Going twice…";hot=true}
+  if(tl)tl.textContent=c.to?Math.ceil((c.to.until-Date.now())/1000):sec;
+  if(st){let m,hot=false;if(c.paused!=null)m="Clock paused";else if(c.to)m=`Timeout: ${S.names[c.to.who]} is thinking…`;else if(c.quick){m=c.leader==null?"Nobody can afford him…":"Nobody can raise. Going, going…";hot=true}else if(c.leader==null)m=frac>.34?"Who will open the bidding?":"Last call for an opening bid…";else if(frac>.66)m="Bidding open";else if(frac>.34){m="Going once…"}else{m="Going twice…";hot=true}
     if(st.textContent!==m)st.textContent=m;st.classList.toggle("hot",hot)}
-  if(c.paused==null&&sec<=3&&sec>0&&c.lastSec!==sec){c.lastSec=sec;SND.tick()}
+  if(c.paused==null&&!c.to&&sec<=3&&sec>0&&c.lastSec!==sec){c.lastSec=sec;SND.tick()}
   return left;
 }
 function hammer(){
@@ -748,7 +805,9 @@ document.addEventListener("click",e=>{
     case "spin":spin();break;
     case "bid":bid(i,false);break;
     case "jump":bid(i,true);break;
-    case "pause":{const c=S.cur;if(c.paused!=null){c.deadline=Date.now()+c.paused;c.paused=null}else{c.paused=Math.max(0,c.deadline-Date.now())}save();render();break}
+    case "pause":{const c=S.cur;if(c.paused!=null){c.deadline=Date.now()+c.paused;c.paused=null}else{c.paused=Math.max(0,c.deadline-Date.now());c.to=null}save();render();break}
+    case "timeout":useTimeout(i);break;
+    case "unsold":if(S.phase==="live"&&S.cur.leader==null)markUnsold();break;
     case "hammer":hammer();break;
     case "rtm":t.dataset.yes==="1"?finalize(1-S.cur.leader,S.cur.bid,true):finalize(S.cur.leader,S.cur.bid,false);break;
     case "next":next();break;
@@ -775,13 +834,19 @@ document.addEventListener("keydown",e=>{
   if(ui.overlay||S.phase==="setup")return;
   const k=e.key.toLowerCase();
   if(k===" "&&S.phase==="idle"){e.preventDefault();ac();spin();return}
+  if(S.phase==="sold"&&(k===" "||k==="enter"||k==="n")){e.preventDefault();next();return}
+  if(S.phase==="rtm"){if(k==="y")finalize(1-S.cur.leader,S.cur.bid,true);else if(k==="n")finalize(S.cur.leader,S.cur.bid,false);return}
   if(S.phase==="live"){ac();
     if(k==="a")bid(0,false);else if(k==="s")bid(0,true);else if(k==="l")bid(1,false);else if(k==="k")bid(1,true);
+    else if(k==="q")useTimeout(0);else if(k==="o")useTimeout(1);
+    else if(k==="g"){if(S.cur.leader!=null)hammer();else toast("No bids yet. Press U to mark him unsold.")}
+    else if(k==="u"){if(S.cur.leader==null)markUnsold();else toast("There's a bid on the table. Press G to sell him.")}
     else if(k==="p")document.querySelector('[data-act="pause"]')?.click();}
 });
 
 /* ---------------- clock ---------------- */
 setInterval(()=>{
+  if(S.phase==="live"&&S.cur.to&&S.cur.paused==null){const c=S.cur;if(Date.now()>=c.to.until){c.deadline=Date.now()+c.to.left;c.to=null;save();render()}else c.deadline=Date.now()+c.to.left}
   if(S.phase==="live"&&!ui.overlay){const left=updTimer();if(S.cur.paused==null&&left<=0)hammer()}
   else if(S.phase==="live"&&ui.overlay&&S.cur.paused==null){S.cur.deadline+=100}
   if(S.phase==="rtm"){const left=Math.max(0,S.cur.rtmDeadline-Date.now()),el=document.getElementById("rtmleft");if(el)el.textContent=Math.ceil(left/1000);if(left<=0)finalize(S.cur.leader,S.cur.bid,false)}
@@ -793,6 +858,8 @@ function start(data){
   if(S.phase==="spinning")S.phase="idle";
   if(S.phase==="live"&&S.cur&&S.cur.paused==null)S.cur.paused=Math.max(1000,S.cur.deadline-Date.now());
   if(S.phase==="rtm")S.cur.rtmDeadline=Date.now()+8000;
+  if(S.cur)S.cur.to=null;
+  if(!S.timeouts)S.timeouts=[true,true];
   render();
   if(S.phase==="reveal")finishReveal();
   if(S.phase==="done")finishReveal();
