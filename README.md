@@ -4,7 +4,7 @@
 
 A two-player cricket auction game that runs in the browser. It started as a Papa vs Son Excel sheet at the dining table and grew into a full auction with a bidding clock, a gavel, legend coaches and confetti.
 
-**Play it here:** https://YOUR-USERNAME.github.io/cricket-auction-night/
+**Play it here:** https://atuldumbre146.github.io/cricket-auction/
 
 ## How it works
 
